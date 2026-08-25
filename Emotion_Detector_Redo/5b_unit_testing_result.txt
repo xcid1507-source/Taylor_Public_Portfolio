@@ -1,0 +1,6 @@
+Neelams-MacBook-Air:final_project neelamahlawat$ python3 test_emotion_detection.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.516s
+
+OK
