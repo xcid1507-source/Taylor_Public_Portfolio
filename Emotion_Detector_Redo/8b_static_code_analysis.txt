@@ -1,0 +1,6 @@
+Neelams-MacBook-Air:final_project neelamahlawat$ pylint server.py
+
+--------------------------------------------------------------------
+Your code has been rated at 10.00/10 (previous run: 10.00/10, +0.00)
+
+Neelams-MacBook-Air:final_project neelamahlawat$
