@@ -28,20 +28,12 @@ form.addEventListener("submit", async (event) => {
   try {
     const params = new URLSearchParams({ textToAnalyze: text });
     const response = await fetch(`/emotionDetector?${params.toString()}`);
-    const data = await response.json();
+    const body = await response.text();
     if (!response.ok) {
-      throw new Error(data.error || "The text could not be analyzed.");
+      throw new Error(body || "The text could not be analyzed.");
     }
 
-    message.textContent = data.dominant_emotion
-      ? `Dominant emotion: ${data.dominant_emotion}`
-      : "No dominant emotion was returned.";
-    for (const emotion of ["anger", "disgust", "fear", "joy", "sadness"]) {
-      const item = document.createElement("li");
-      const value = data[emotion];
-      item.textContent = `${emotion}: ${typeof value === "number" ? value.toFixed(4) : "unavailable"}`;
-      scores.append(item);
-    }
+    message.textContent = body;
   } catch (error) {
     message.textContent = error.message || "The service is temporarily unavailable.";
   } finally {
