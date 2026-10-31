@@ -12,14 +12,9 @@ input.addEventListener("input", () => {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const text = input.value.trim();
+  const text = input.value;
   result.hidden = false;
   scores.replaceChildren();
-
-  if (!text) {
-    message.textContent = "Please enter text to analyze.";
-    return;
-  }
 
   button.disabled = true;
   button.textContent = "Analyzing…";
