@@ -1,41 +1,71 @@
-import json
+"""Call the Watson NLP emotion prediction service."""
+
+from __future__ import annotations
+
 import requests
 
-URL = 'https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict'
-
+URL = (
+    "https://sn-watson-emotion.labs.skills.network/"
+    "v1/watson.runtime.nlp.v1/NlpService/EmotionPredict"
+)
 HEADERS = {
-    'grpc-metadata-mm-model-id': 'emotion_aggregated-workflow_lang_en_stock'
+    "grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"
 }
+EMOTION_LABELS = ("anger", "disgust", "fear", "joy", "sadness")
 
 
-def emotion_detector(text_to_analyze: str | None) -> dict:
-    payload = {'raw_document': {'text': text_to_analyze}}
+def _empty_result() -> dict[str, float | None]:
+    """Return the stable result shape used when the service rejects input."""
+    result: dict[str, float | None] = {
+        emotion: None for emotion in EMOTION_LABELS
+    }
+    result["dominant_emotion"] = None
+    return result
 
-    response = requests.post(url=URL, headers=HEADERS, json=payload)
+
+def emotion_detector(text_to_analyze: str | None) -> dict[str, float | str | None]:
+    """Return five emotion scores and the emotion with the highest score.
+
+    A Watson HTTP 400 is represented by None scores so the Flask layer can
+    return a clear client error. Other HTTP and response-format failures raise
+    an exception for the caller to handle.
+    """
+    if not isinstance(text_to_analyze, str) or not text_to_analyze.strip():
+        return _empty_result()
+
+    payload = {"raw_document": {"text": text_to_analyze.strip()}}
+    response = requests.post(
+        URL,
+        headers=HEADERS,
+        json=payload,
+        timeout=15,
+    )
 
     if response.status_code == 400:
-        return {
-            'anger': None,
-            'disgust': None,
-            'fear': None,
-            'joy': None,
-            'sadness': None,
-            'dominant_emotion': None,
-        }
+        return _empty_result()
 
-    json_response = json.loads(response.text)
+    response.raise_for_status()
+    data = response.json()
+    predictions = data.get("emotionPredictions")
+    if not predictions or not isinstance(predictions[0], dict):
+        raise ValueError("Watson returned no emotion predictions.")
 
-    emotions = json_response.get('emotionPredictions')[0] or {}
-    emotions_rating = emotions.get('emotion')
+    scores = predictions[0].get("emotion")
+    if not isinstance(scores, dict):
+        raise ValueError("Watson returned an invalid emotion score object.")
 
-    dominant_emotion = ''
-    highest_score = 0
+    result: dict[str, float | str | None] = {
+        label: scores.get(label) for label in EMOTION_LABELS
+    }
+    available_scores = {
+        label: value
+        for label, value in result.items()
+        if label in EMOTION_LABELS and isinstance(value, (int, float))
+    }
+    result["dominant_emotion"] = (
+        max(available_scores, key=available_scores.get)
+        if available_scores
+        else None
+    )
+    return result
 
-    for emotion_key, emotion_value in emotions_rating.items():
-        if emotion_value > highest_score:
-            highest_score = emotion_value
-            dominant_emotion = emotion_key
-
-    emotions_rating.update({'dominant_emotion': dominant_emotion})
-
-    return emotions_rating
