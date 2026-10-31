@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Analyze text with Watson NLP emotion detection.">
+  <title>Watson NLP Emotion Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <p class="eyebrow">IBM Generative AI Engineering</p>
+      <h1>Emotion Detector</h1>
+      <p class="intro">See the emotions expressed in a piece of text.</p>
+    </header>
+    <form id="emotion-form">
+      <label for="text-input">Text to analyze</label>
+      <textarea id="text-input" name="textToAnalyze" rows="5" maxlength="5000"
+        placeholder="Type a sentence or short paragraph…" required></textarea>
+      <div class="form-footer">
+        <span id="character-count">0 / 5000</span>
+        <button type="submit" id="analyze-button">Analyze text</button>
+      </div>
+    </form>
+    <section id="result" class="result" aria-live="polite" hidden>
+      <h2>Results</h2>
+      <p id="status-message"></p>
+      <ul id="scores"></ul>
+    </section>
+    <footer>Powered by the Watson NLP emotion model.</footer>
+  </main>
+</body>
+</html>
+
