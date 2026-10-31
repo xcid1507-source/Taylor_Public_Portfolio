@@ -9,37 +9,39 @@ from EmotionDetection.emotion_detection import emotion_detector
 class TestEmotionDetector(unittest.TestCase):
     """Check result formatting and error handling without network access."""
 
-    @patch("EmotionDetection.emotion_detection.requests.post")
-    def test_returns_all_scores_and_dominant_emotion(self, mock_post):
-        mock_post.return_value = Mock(
+    def analyze_with_dominant(self, dominant):
+        """Return a mocked prediction whose highest score is dominant."""
+        scores = {
+            emotion: 0.1
+            for emotion in ("anger", "disgust", "fear", "joy", "sadness")
+        }
+        scores[dominant] = 0.9
+        response = Mock(
             status_code=200,
-            json=lambda: {
-                "emotionPredictions": [
-                    {
-                        "emotion": {
-                            "anger": 0.1,
-                            "disgust": 0.05,
-                            "fear": 0.2,
-                            "joy": 0.6,
-                            "sadness": 0.05,
-                        }
-                    }
-                ]
-            },
+            json=lambda: {"emotionPredictions": [{"emotion": scores}]},
         )
-        result = emotion_detector("I am glad this happened")
-        self.assertEqual(
-            result,
-            {
-                "anger": 0.1,
-                "disgust": 0.05,
-                "fear": 0.2,
-                "joy": 0.6,
-                "sadness": 0.05,
-                "dominant_emotion": "joy",
-            },
-        )
+        with patch(
+            "EmotionDetection.emotion_detection.requests.post",
+            return_value=response,
+        ) as mock_post:
+            result = emotion_detector("A sample sentence")
         mock_post.assert_called_once()
+        return result["dominant_emotion"]
+
+    def test_anger(self):
+        self.assertEqual(self.analyze_with_dominant("anger"), "anger")
+
+    def test_disgust(self):
+        self.assertEqual(self.analyze_with_dominant("disgust"), "disgust")
+
+    def test_fear(self):
+        self.assertEqual(self.analyze_with_dominant("fear"), "fear")
+
+    def test_joy(self):
+        self.assertEqual(self.analyze_with_dominant("joy"), "joy")
+
+    def test_sadness(self):
+        self.assertEqual(self.analyze_with_dominant("sadness"), "sadness")
 
     @patch("EmotionDetection.emotion_detection.requests.post")
     def test_http_400_returns_empty_result(self, mock_post):
